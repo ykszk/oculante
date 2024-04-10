@@ -26,6 +26,8 @@ use strum_macros::EnumIter;
 
 use crate::appstate::{ImageGeometry, Message, OculanteState};
 use crate::cache::Cache;
+#[cfg(feature = "turbo")]
+use crate::image_editing::lossless_tx;
 use crate::image_editing::{self, ImageOperation};
 use crate::image_loader::open_image;
 use crate::shortcuts::{lookup, InputEvent, Shortcuts};
@@ -453,6 +455,32 @@ impl ColorChannel {
             Self::Rgba => lookup(shortcuts, &InputEvent::RGBAChannel),
         }
     }
+
+    pub fn next(&self) -> ColorChannel {
+        use ColorChannel::*;
+
+        match self {
+            Red => Green,
+            Green => Blue,
+            Blue => Alpha,
+            Alpha => Rgb,
+            Rgb => Rgba,
+            Rgba => Red,
+        }
+    }
+
+    pub fn prev(&self) -> ColorChannel {
+        use ColorChannel::*;
+
+        match self {
+            Red => Rgba,
+            Green => Red,
+            Blue => Green,
+            Alpha => Blue,
+            Rgb => Alpha,
+            Rgba => Blue,
+        }
+    }
 }
 
 pub fn zoomratio(i: f32, s: f32) -> f32 {
@@ -777,6 +805,37 @@ pub fn zoom_image(state: &mut OculanteState, delta_y: f32) {
         );
         state.image_geometry.scale += delta;
     }
+}
+
+pub fn transform_current_image(state: &mut OculanteState, transform: turbojpeg::Transform) {
+    if let Some(p) = &state.current_path {
+        if lossless_tx(p, transform).is_ok() {
+            state.is_loaded = false;
+            // This needs "deep" reload
+            state.player.cache.clear();
+            state.player.load(p, state.message_channel.0.clone());
+        }
+    }
+}
+
+pub fn rotate_right(state: &mut OculanteState) {
+    transform_current_image(
+        state,
+        turbojpeg::Transform {
+            op: turbojpeg::TransformOp::Rot90,
+            ..turbojpeg::Transform::default()
+        },
+    )
+}
+
+pub fn rotate_left(state: &mut OculanteState) {
+    transform_current_image(
+        state,
+        turbojpeg::Transform {
+            op: turbojpeg::TransformOp::Rot270,
+            ..turbojpeg::Transform::default()
+        },
+    )
 }
 
 /// Set the window title

@@ -23,8 +23,6 @@ pub mod cache;
 pub mod scrubber;
 pub mod settings;
 pub mod shortcuts;
-#[cfg(feature = "turbo")]
-use crate::image_editing::lossless_tx;
 use crate::scrubber::find_first_image_in_directory;
 use crate::settings::set_system_theme;
 use crate::settings::ColorTheme;
@@ -447,45 +445,12 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
             #[cfg(feature = "turbo")]
             if key_pressed(app, state, LosslessRotateRight) {
                 debug!("Lossless rotate right");
-
-                if let Some(p) = &state.current_path {
-                    if lossless_tx(
-                        p,
-                        turbojpeg::Transform {
-                            op: turbojpeg::TransformOp::Rot90,
-                            ..turbojpeg::Transform::default()
-                        },
-                    )
-                    .is_ok()
-                    {
-                        state.is_loaded = false;
-                        // This needs "deep" reload
-                        state.player.cache.clear();
-                        state.player.load(p, state.message_channel.0.clone());
-                    }
-                }
+                rotate_right(state);
             }
             #[cfg(feature = "turbo")]
             if key_pressed(app, state, LosslessRotateLeft) {
                 debug!("Lossless rotate left");
-                if let Some(p) = &state.current_path {
-                    if lossless_tx(
-                        p,
-                        turbojpeg::Transform {
-                            op: turbojpeg::TransformOp::Rot270,
-                            ..turbojpeg::Transform::default()
-                        },
-                    )
-                    .is_ok()
-                    {
-                        state.is_loaded = false;
-                        // This needs "deep" reload
-                        state.player.cache.clear();
-                        state.player.load(p, state.message_channel.0.clone());
-                    } else {
-                        warn!("rotate left failed")
-                    }
-                }
+                rotate_left(state);
             }
             if key_pressed(app, state, Browse) {
                 state.redraw = true;

@@ -1898,32 +1898,26 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
             }
         }
 
-        let mut changed_channels = false;
+        let prev_channel = state.persistent_settings.current_channel;
 
         if key_pressed(app, state, RedChannel) {
             state.persistent_settings.current_channel = ColorChannel::Red;
-            changed_channels = true;
         }
         if key_pressed(app, state, GreenChannel) {
             state.persistent_settings.current_channel = ColorChannel::Green;
-            changed_channels = true;
         }
         if key_pressed(app, state, BlueChannel) {
             state.persistent_settings.current_channel = ColorChannel::Blue;
-            changed_channels = true;
         }
         if key_pressed(app, state, AlphaChannel) {
             state.persistent_settings.current_channel = ColorChannel::Alpha;
-            changed_channels = true;
         }
 
         if key_pressed(app, state, RGBChannel) {
             state.persistent_settings.current_channel = ColorChannel::Rgb;
-            changed_channels = true;
         }
         if key_pressed(app, state, RGBAChannel) {
             state.persistent_settings.current_channel = ColorChannel::Rgba;
-            changed_channels = true;
         }
 
         ui.add_enabled_ui(!state.persistent_settings.edit_enabled, |ui| {
@@ -1952,14 +1946,14 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
                         )
                         .clicked()
                         {
-                            changed_channels = true;
+                            // changed_channels = true;
                         }
                     }
                 });
         });
 
         // TODO: remove redundancy
-        if changed_channels {
+        if prev_channel!=state.persistent_settings.current_channel {
             if let Some(img) = &state.current_image {
                 match &state.persistent_settings.current_channel {
                     ColorChannel::Rgb => {
